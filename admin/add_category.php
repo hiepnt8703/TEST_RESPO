@@ -1,3 +1,56 @@
+<?php
+// Kết nối đến cơ sở dữ liệu
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "btth01_cse485btth_ex";
+
+try {
+    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Xử lý khi nút 'Thêm' được bấm
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        // Kiểm tra xem dữ liệu đã được submit hay chưa
+        if (isset($_POST['btnAdd'])) {
+            // Lấy dữ liệu từ form
+            $ten_tloai_new = $_POST['txtCatName'];
+
+            // Truy vấn SQL để lấy `ma_tloai` lớn nhất
+            $sql_max_id = "SELECT MAX(ma_tloai) AS max_id FROM theloai";
+            $stmt_max_id = $conn->query($sql_max_id);
+            
+            if ($stmt_max_id->rowCount() > 0) {
+                $row = $stmt_max_id->fetch(PDO::FETCH_ASSOC);
+                $max_id = $row['max_id'];
+                // Tăng giá trị lớn nhất lên 1 để có giá trị mới cho `ma_tloai`
+                $ma_tloai_new = $max_id + 1;
+            } else {
+                // Nếu không có dữ liệu trong bảng, giả sử `ma_tloai` mới là 1
+                $ma_tloai_new = 1;
+            }
+
+            // Truy vấn SQL để thêm thể loại mới
+            $sql_add_category = "INSERT INTO theloai (ma_tloai, ten_tloai) VALUES (:ma_tloai, :ten_tloai)";
+            $stmt_add_category = $conn->prepare($sql_add_category);
+            $stmt_add_category->bindParam(':ma_tloai', $ma_tloai_new);
+            $stmt_add_category->bindParam(':ten_tloai', $ten_tloai_new);
+
+            if ($stmt_add_category->execute()) {
+                // Nếu thêm thành công, chuyển hướng về trang category.php
+                header("Location: category.php");
+            } else {
+                echo "Lỗi thêm dữ liệu: " . $stmt_add_category->errorInfo()[2];
+            }
+        }
+    }
+} catch (PDOException $e) {
+    die("Kết nối đến cơ sở dữ liệu thất bại: " . $e->getMessage());
+} finally {
+    // Đóng kết nối cơ sở dữ liệu
+    $conn = null;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,25 +95,24 @@
         </nav>
 
     </header>
-    <main class="container mt-5 mb-5">
-        <!-- <h3 class="text-center text-uppercase mb-3 text-primary">CẢM NHẬN VỀ BÀI HÁT</h3> -->
-        <div class="row">
-            <div class="col-sm">
-                <h3 class="text-center text-uppercase fw-bold">Thêm mới thể loại</h3>
-                <form action="process_add_category.php" method="post">
-                    <div class="input-group mt-3 mb-3">
-                        <span class="input-group-text" id="lblCatName">Tên thể loại</span>
-                        <input type="text" class="form-control" name="txtCatName" >
-                    </div>
+    <div class="container mt-5">
+        <h3 class="text-center text-uppercase fw-bold">Thêm mới thể loại</h3>
 
-                    <div class="form-group  float-end ">
-                        <input type="submit" value="Thêm" class="btn btn-success">
-                        <a href="category.php" class="btn btn-warning ">Quay lại</a>
-                    </div>
-                </form>
+        <!-- Form để thêm mới thông tin thể loại -->
+        <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+            <div class="input-group mt-3 mb-3">
+                <span class="input-group-text" id="lblCatName">Tên thể loại</span>
+                <input type="text" class="form-control" name="txtCatName">
             </div>
-        </div>
-    </main>
+
+            <div class="form-group">
+                <input type="submit" value="Thêm" name="btnAdd" class="btn btn-success">
+                <a href="category.php" class="btn btn-warning">Quay lại</a>
+            </div>
+        </form>
+    </div>
+    <br>
+    <br>
     <footer class="bg-white d-flex justify-content-center align-items-center border-top border-secondary  border-2" style="height:80px">
         <h4 class="text-center text-uppercase fw-bold">TLU's music garden</h4>
     </footer>
