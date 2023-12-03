@@ -1,5 +1,4 @@
 <?php
-// Kết nối đến cơ sở dữ liệu
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -9,62 +8,68 @@ try {
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Xử lý khi nút 'Thêm' được bấm
+    if (isset($_GET['id'])) {
+        $edit_id = $_GET['id'];
+
+        $sql_select_author = "SELECT * FROM tacgia WHERE ma_tgia = :edit_id";
+        $stmt = $conn->prepare($sql_select_author);
+        $stmt->bindParam(':edit_id', $edit_id);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($stmt->rowCount() == 1) {
+            $ma_tgia = $row['ma_tgia'];
+            $ten_tgia = $row['ten_tgia'];
+        } else {
+            echo "Không tìm thấy tác giả!";
+            exit;
+        }
+    } else {
+        echo "Không có thông tin tác giả để sửa!";
+        exit;
+    }
+
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        // Kiểm tra xem dữ liệu đã được submit hay chưa
-        if (isset($_POST['btnAdd'])) {
-            // Lấy dữ liệu từ form
-            $ten_tloai_new = $_POST['txtCatName'];
+        if (isset($_POST['btnSave'])) {
+            $ten_tgia_new = $_POST['txtAuthorName'];
 
-            // Truy vấn SQL để lấy `ma_tloai` lớn nhất
-            $sql_max_id = "SELECT MAX(ma_tloai) AS max_id FROM theloai";
-            $stmt_max_id = $conn->query($sql_max_id);
-            
-            if ($stmt_max_id->rowCount() > 0) {
-                $row = $stmt_max_id->fetch(PDO::FETCH_ASSOC);
-                $max_id = $row['max_id'];
-                // Tăng giá trị lớn nhất lên 1 để có giá trị mới cho `ma_tloai`
-                $ma_tloai_new = $max_id + 1;
+            $sql_update_author = "UPDATE tacgia SET ten_tgia = :ten_tgia_new WHERE ma_tgia = :edit_id";
+            $stmt = $conn->prepare($sql_update_author);
+            $stmt->bindParam(':ten_tgia_new', $ten_tgia_new);
+            $stmt->bindParam(':edit_id', $edit_id);
+
+            if ($stmt->execute()) {
+                header("Location: author.php");
+                exit();
             } else {
-                // Nếu không có dữ liệu trong bảng, giả sử `ma_tloai` mới là 1
-                $ma_tloai_new = 1;
-            }
-
-            // Truy vấn SQL để thêm thể loại mới
-            $sql_add_category = "INSERT INTO theloai (ma_tloai, ten_tloai) VALUES (:ma_tloai, :ten_tloai)";
-            $stmt_add_category = $conn->prepare($sql_add_category);
-            $stmt_add_category->bindParam(':ma_tloai', $ma_tloai_new);
-            $stmt_add_category->bindParam(':ten_tloai', $ten_tloai_new);
-
-            if ($stmt_add_category->execute()) {
-                // Nếu thêm thành công, chuyển hướng về trang category.php
-                header("Location: category.php");
-            } else {
-                echo "Lỗi thêm dữ liệu: " . $stmt_add_category->errorInfo()[2];
+                echo "Lỗi cập nhật dữ liệu: " . $stmt->errorInfo()[2];
             }
         }
     }
 } catch (PDOException $e) {
     die("Kết nối đến cơ sở dữ liệu thất bại: " . $e->getMessage());
 } finally {
-    // Đóng kết nối cơ sở dữ liệu
     $conn = null;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Music for Life</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <title>Edit Category</title>
+    <!-- Bootstrap CSS link và các link CSS khác nếu cần -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="css/style_login.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg bg-body-tertiary shadow p-3 bg-white rounded">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary shadow p-3 bg-white rounded">
             <div class="container-fluid">
                 <div class="h3">
                     <a class="navbar-brand" href="#">Administration</a>
@@ -81,10 +86,10 @@ try {
                         <a class="nav-link" href="../index.php">Trang ngoài</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active fw-bold" href="category.php">Thể loại</a>
+                        <a class="nav-link" href="category.php">Thể loại</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="author.php">Tác giả</a>
+                        <a class="nav-link active fw-bold" href="author.php">Tác giả</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="article.php">Bài viết</a>
@@ -93,29 +98,32 @@ try {
                 </div>
             </div>
         </nav>
-
     </header>
     <div class="container mt-5">
-        <h3 class="text-center text-uppercase fw-bold">Thêm mới thể loại</h3>
-
-        <!-- Form để thêm mới thông tin thể loại -->
-        <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+        <h3 class="text-center text-uppercase fw-bold">Sửa thông tin tác giả</h3>
+        <form action="<?php echo $_SERVER['PHP_SELF'] . '?id=' . $ma_tgia; ?>" method="post">
             <div class="input-group mt-3 mb-3">
-                <span class="input-group-text" id="lblCatName">Tên thể loại</span>
-                <input type="text" class="form-control" name="txtCatName">
+                <span class="input-group-text" id="lblAuthorId">Mã tác giả</span>
+                <input type="text" class="form-control" name="txtAuthorId" value="<?php echo $ma_tgia; ?>" readonly>
             </div>
-
-            <div class="form-group">
-                <input type="submit" value="Thêm" name="btnAdd" class="btn btn-success">
-                <a href="category.php" class="btn btn-warning">Quay lại</a>
+            <div class="input-group mt-3 mb-3">
+                <span class="input-group-text" id="lblAuthorName">Tên tác giả</span>
+                <input type="text" class="form-control" name="txtAuthorName" value="<?php echo $ten_tgia; ?>">
+            </div>
+            <div class="form-group float-end">
+                <input type="submit" value="Lưu lại" name="btnSave" class="btn btn-success">
+                <a href="author.php" class="btn btn-warning">Quay lại</a>
             </div>
         </form>
     </div>
+    <br>
+    <br>
     <br>
     <br>
     <footer class="bg-white d-flex justify-content-center align-items-center border-top border-secondary  border-2" style="height:80px">
         <h4 class="text-center text-uppercase fw-bold">TLU's music garden</h4>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+
 </body>
 </html>

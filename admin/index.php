@@ -1,3 +1,43 @@
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "btth01_cse485btth_ex";
+
+try {
+    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Tính tổng số user
+    $sql_count_users = "SELECT COUNT(*) AS total_users FROM users";
+    $result_count_users = $conn->query($sql_count_users);
+    $row_count_users = $result_count_users->fetch(PDO::FETCH_ASSOC);
+    $total_users = $row_count_users['total_users'];
+
+    // Tính tổng số thể loại
+    $sql_count_categories = "SELECT COUNT(*) AS total_categories FROM theloai";
+    $result_count_categories = $conn->query($sql_count_categories);
+    $row_count_categories = $result_count_categories->fetch(PDO::FETCH_ASSOC);
+    $total_categories = $row_count_categories['total_categories'];
+
+    // Tính tổng số tác giả
+    $sql_count_authors = "SELECT COUNT(*) AS total_authors FROM tacgia";
+    $result_count_authors = $conn->query($sql_count_authors);
+    $row_count_authors = $result_count_authors->fetch(PDO::FETCH_ASSOC);
+    $total_authors = $row_count_authors['total_authors'];
+
+    // Tính tổng số bài viết
+    $sql_count_articles = "SELECT COUNT(*) AS total_articles FROM baiviet";
+    $result_count_articles = $conn->query($sql_count_articles);
+    $row_count_articles = $result_count_articles->fetch(PDO::FETCH_ASSOC);
+    $total_articles = $row_count_articles['total_articles'];
+
+} catch (PDOException $e) {
+    die("Kết nối đến cơ sở dữ liệu thất bại: " . $e->getMessage());
+}
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,7 +83,6 @@
 
     </header>
     <main class="container mt-5 mb-5">
-        <!-- <h3 class="text-center text-uppercase mb-3 text-primary">CẢM NHẬN VỀ BÀI HÁT</h3> -->
         <div class="row">
             <div class="col-sm-3">
                 <div class="card mb-2" style="width: 100%;">
@@ -51,9 +90,8 @@
                         <h5 class="card-title text-center">
                             <a href="" class="text-decoration-none">Người dùng</a>
                         </h5>
-
                         <h5 class="h1 text-center">
-                            110
+                        <p class="card-text text-center"><?php echo $total_users; ?></p>
                         </h5>
                     </div>
                 </div>
@@ -63,11 +101,11 @@
                 <div class="card mb-2" style="width: 100%;">
                     <div class="card-body">
                         <h5 class="card-title text-center">
-                            <a href="" class="text-decoration-none">Thể loại</a>
+                            <a href="category.php" class="text-decoration-none">Thể loại</a>
                         </h5>
 
                         <h5 class="h1 text-center">
-                            10
+                        <p class="card-text text-center"><?php echo $total_categories; ?></p>
                         </h5>
                     </div>
                 </div>
@@ -77,11 +115,11 @@
                 <div class="card mb-2" style="width: 100%;">
                     <div class="card-body">
                         <h5 class="card-title text-center">
-                            <a href="" class="text-decoration-none">Tác giả</a>
+                            <a href="author.php" class="text-decoration-none">Tác giả</a>
                         </h5>
 
                         <h5 class="h1 text-center">
-                            20
+                        <p class="card-text text-center"><?php echo $total_authors; ?></p>
                         </h5>
                     </div>
                 </div>
@@ -91,11 +129,10 @@
                 <div class="card mb-2" style="width: 100%;">
                     <div class="card-body">
                         <h5 class="card-title text-center">
-                            <a href="" class="text-decoration-none">Bài viết</a>
+                            <a href="article.php" class="text-decoration-none">Bài viết</a>
                         </h5>
-
                         <h5 class="h1 text-center">
-                            110
+                        <p class="card-text text-center"><?php echo $total_articles; ?></p>
                         </h5>
                     </div>
                 </div>
@@ -106,5 +143,8 @@
         <h4 class="text-center text-uppercase fw-bold">TLU's music garden</h4>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <?php
+    $conn = null;
+    ?>
 </body>
 </html>

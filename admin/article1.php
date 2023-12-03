@@ -1,4 +1,5 @@
 <?php
+// Kết nối đến cơ sở dữ liệu
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -11,11 +12,13 @@ try {
     if (isset($_GET['delete_id'])) {
         $deleteId = $_GET['delete_id'];
 
-        $deleteBaivietQuery = "DELETE FROM baiviet WHERE ma_tloai = :deleteId";
+        // Xóa dữ liệu từ bảng baiviet trước (nếu cần)
+        $deleteBaivietQuery = "DELETE FROM baiviet WHERE ma_bviet = :deleteId";
         $stmt = $conn->prepare($deleteBaivietQuery);
         $stmt->bindParam(':deleteId', $deleteId);
         $stmt->execute();
 
+        // Xóa dữ liệu từ bảng theloai
         $deleteQuery = "DELETE FROM theloai WHERE ma_tloai = :deleteId";
         $stmt = $conn->prepare($deleteQuery);
         $stmt->bindParam(':deleteId', $deleteId);
@@ -28,14 +31,13 @@ try {
         }
     }
 
-    $sql = "SELECT * FROM theloai ORDER BY ma_tloai";
+    $sql = "SELECT * FROM baiviet ORDER BY ma_bviet";
     $result = $conn->query($sql);
 
 } catch (PDOException $e) {
     die("Kết nối đến cơ sở dữ liệu thất bại: " . $e->getMessage());
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -72,7 +74,7 @@ try {
                         <a class="nav-link" href="author.php">Tác giả</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="article.php">Bài viết</a>
+                        <a class="nav-link active fw-bold" href="category.php">Bài viết</a>
                     </li>
                 </ul>
                 </div>
@@ -80,13 +82,16 @@ try {
         </nav>
     </header>
     <main class="container mt-5 mb-5">
-        <h3 class="text-center text-uppercase fw-bold">Danh sách Thể loại</h3>
-        <a href="add_category.php" class="btn btn-primary mb-3">Thêm mới</a>
+        <h3 class="text-center text-uppercase fw-bold">Danh sách Bài viết</h3>
+        <a href="add_article.php" class="btn btn-primary mb-3">Thêm mới</a>
         <table class="table table-bordered mt-3">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Tên thể loại</th>
+                    <th>Tiêu đề</th>
+                    <th>Tên bài hát</th>
+                    <th>Mã thể loại</th>
+                    <th>Mã tác giả</th>
                     <th>Sửa</th>
                     <th>Xóa</th>
                 </tr>
@@ -96,14 +101,17 @@ try {
                 if ($result->rowCount() > 0) {
                 foreach ($result as $row) {
                     echo "<tr>";
+                    echo "<td>" . htmlspecialchars($row['ma_bviet']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['tieude']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['ten_bhat']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['ma_tloai']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['ten_tloai']) . "</td>";
-                    echo "<td><a href='edit_category.php?id=" . htmlspecialchars($row['ma_tloai']) . "'><i class='fa fa-edit'></i></a></td>";
-                    echo "<td><a href='#' class='delete-category' data-id='" . htmlspecialchars($row['ma_tloai']) . "'><i class='fa fa-trash'></i></a></td>";
+                    echo "<td>" . htmlspecialchars($row['ma_tgia']) . "</td>";
+                    echo "<td><a href='edit_article.php?id=" . htmlspecialchars($row['ma_bviet']) . "'><i class='fa fa-edit'></i></a></td>";
+                    echo "<td><a href='#' class='delete-article' data-id='" . htmlspecialchars($row['ma_bviet']) . "'><i class='fa fa-trash'></i></a></td>";
                     echo "</tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='4'>Không có dữ liệu</td></tr>";
+                    echo "<tr><td colspan='7'>Không có dữ liệu</td></tr>";
                 }
                 ?>
             </tbody>
@@ -116,15 +124,15 @@ try {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-        var deleteLinks = document.querySelectorAll('.delete-category');
+        var deleteLinks = document.querySelectorAll('.delete-article');
         deleteLinks.forEach(function(link) {
             link.addEventListener('click', function(event) {
                 event.preventDefault(); 
 
-                var categoryId = this.getAttribute('data-id');
+                var articleId = this.getAttribute('data-id');
 
                 if (confirm('Bạn có chắc chắn muốn xóa?')) {
-                window.location.href = 'category.php?delete_id=' + categoryId;
+                window.location.href = 'category.php?delete_id=' + articleId;
                 }
             });
         });
